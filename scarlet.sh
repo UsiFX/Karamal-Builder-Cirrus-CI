@@ -37,11 +37,12 @@
 	B='\033[1;34m'
 	W='\033[1;37m'
 
-error () {
-	echo -e ""
-	echo -e "$R Error! $Y$1"
-	echo -e ""
-	exit 1
+xmsg()
+{
+	case $* in
+                "-n") echo "[*] $@" ;;
+                "-e"|"--error") echo "[!] error: $@" ; exit 1 ;;
+        esac
 }
 
 if [[ "$USER" == "" ]]; then
@@ -68,7 +69,7 @@ function post_msg() {
 	}
 
 function push() {
-	curl -F document=@$1 "https://api.telegram.org/bot$token/sendDocument" \
+	curl -F document=@$(echo $1) "https://api.telegram.org/bot$token/sendDocument" \
 	-F chat_id="$chat_id" \
 	-F "disable_web_page_preview=true" \
 	-F "parse_mode=html" \
@@ -91,7 +92,7 @@ pass() {
 		C_PATH="$KERNEL_DIR/gcc64/bin:$KERNEL_DIR/gcc32/"
 	else
 		clear
-		error 'Value not recognized'
+		xmsg -e "Value not recognized"
 	fi
 		CC_32="$KERNEL_DIR/gcc32/bin/arm-eabi-"
 		CC_COMPAT="$KERNEL_DIR/gcc32/bin/arm-eabi-gcc"
@@ -134,7 +135,8 @@ muke () {
 BUILD_END=$(date +"%s")
 
 # Cleanup the build environment
-build () {
+build ()
+{
 	clear
 	if [[ "$BUILD" == "clean" ]]; then
 		rm -rf $COMPILER || mkdir $COMPILER
@@ -145,13 +147,12 @@ build () {
 }
 
 # BUILD-START
-compile () {
+compile ()
+{
 	CFLAG=$DFCF
 	muke
 
-	echo -e "$B"
-	echo -e "                Build started                "
-	echo -e "$G"
+	xmsg -e "$B Build started $G"
 
 	BUILD_START=$(date +"%s")
 
@@ -161,19 +162,18 @@ compile () {
 # BUILD-END
 	BUILD_END=$(date +"%s")
 
-	echo -e "$B"
-	echo -e "                Zipping started                "
-	echo -e "$W"
+        xmsg -n "Zipping started $W"
 	check
 }
 
 # Check for AnyKernel3
-check () {
+check ()
+{
 	if [[ -f $KERNEL_DIR/$COMPILER/arch/arm64/boot/Image.gz-dtb ]]; then
 		if [[ -d $ZIP_DIR ]]; then
 			zip_ak
 		else
-			error "Anykernel is not present, cannot zip"
+			xmsg -e "Anykernel is not present, cannot zip"
 		fi
 	else
 		push "build.log" "Build Throws Errors"
